@@ -1,253 +1,1184 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>你好，世界 | Hello World 经典页面</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Tab</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --panel-2: #eef2f6;
+      --line: #d9e0e7;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --accent-2: #e8f0ff;
+      --danger: #dc2626;
+      --shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+      --radius: 18px;
+    }
 
-        body {
-            /* 优雅的渐变背景：浅灰蓝 -> 淡紫雾霭，现代感十足 */
-            background: linear-gradient(135deg, #f0f4ff 0%, #e6e9fc 50%, #f9f0ff 100%);
-            font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1.5rem;
-            /* 平滑背景滚动（保留视觉效果） */
-            position: relative;
-        }
+    * {
+      box-sizing: border-box;
+    }
 
-        /* 装饰性光晕背景元素（增加层次感） */
-        body::before {
-            content: '';
-            position: fixed;
-            top: -20%;
-            left: -20%;
-            width: 140%;
-            height: 140%;
-            background: radial-gradient(circle at 20% 40%, rgba(255, 255, 255, 0.5) 0%, rgba(220, 230, 255, 0) 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(37, 99, 235, 0.07), transparent 24%),
+        radial-gradient(circle at 85% 20%, rgba(14, 165, 233, 0.06), transparent 22%),
+        linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%);
+    }
 
-        /* 主卡片容器 */
-        .hello-card {
-            position: relative;
-            z-index: 2;
-            max-width: 720px;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(0px);
-            border-radius: 3rem;
-            padding: 2.8rem 2rem;
-            text-align: center;
-            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.05);
-            transition: transform 0.25s ease, box-shadow 0.35s ease;
-            border: 1px solid rgba(255, 255, 255, 0.6);
-        }
+    body {
+      overflow: hidden;
+    }
 
-        /* 悬浮时卡片轻微上扬 + 阴影加深，灵动但不夸张 */
-        .hello-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 30px 50px -15px rgba(0, 0, 0, 0.25);
-            background: rgba(255, 255, 255, 0.96);
-            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), box-shadow 0.3s;
-        }
+    .app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 24px 24px 18px;
+    }
 
-        /* 地球/世界 图标装饰，活泼开场 */
-        .world-icon {
-            font-size: 4.2rem;
-            line-height: 1;
-            margin-bottom: 0.75rem;
-            display: inline-block;
-            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.08));
-            animation: subtle-float 3s ease-in-out infinite;
-        }
+    .action-column {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 20;
+    }
 
-        /* 轻微浮动动画，增加生命力 */
-        @keyframes subtle-float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-6px); }
-            100% { transform: translateY(0px); }
-        }
+    .action-icon-btn {
+      width: 40px;
+      height: 40px;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: var(--muted);
+      transition: background 0.16s ease, color 0.16s ease;
+    }
 
-        /* 主标题: 渐变文字 + 大气粗细 */
-        .glow-text {
-            font-size: clamp(3rem, 10vw, 5.6rem);
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            margin: 0.5rem 0 0.75rem 0;
-            background: linear-gradient(125deg, #1f2b5c, #4a3b7c, #2266cc, #3b82f6);
-            background-size: 180% 180%;
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            line-height: 1.2;
-            transition: background-position 0.5s ease;
-        }
+    .action-icon-btn:hover {
+      background: rgba(15, 23, 42, 0.05);
+      color: var(--text);
+    }
 
-        /* 增加渐变流动的细腻感 */
-        .glow-text:hover {
-            background-position: 100% 0%;
-        }
+    .action-icon-btn svg {
+      width: 24px;
+      height: 24px;
+    }
 
-        /* 温暖的描述文字 */
-        .description {
-            font-size: 1.2rem;
-            line-height: 1.5;
-            color: #2c3e4e;
-            margin: 1rem 0 1.5rem 0;
-            font-weight: 450;
-            max-width: 90%;
-            margin-left: auto;
-            margin-right: auto;
-            opacity: 0.85;
-        }
+    .settings-panel {
+      position: absolute;
+      top: 24px;
+      right: 76px;
+      width: 320px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+      display: none;
+      z-index: 20;
+    }
 
-        /* 优雅的分隔装饰 */
-        .divider {
-            width: 80px;
-            height: 3px;
-            background: linear-gradient(90deg, #8b9eff, #a97cff, #6c9eff);
-            border-radius: 3px;
-            margin: 1.2rem auto 1.4rem auto;
-        }
+    .settings-panel.open {
+      display: block;
+      animation: fadeIn 0.16s ease-out;
+    }
 
-        /* 趣味小标签区块，展示编程世界的情怀 */
-        .code-snippet {
-            background: #f1f4fa;
-            border-radius: 2rem;
-            padding: 0.9rem 1.2rem;
-            margin: 1.8rem 0.5rem 0.5rem;
-            display: inline-flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.8rem;
-            font-size: 0.85rem;
-            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-            border: 1px solid #e2e8f0;
-            backdrop-filter: blur(2px);
-            transition: all 0.2s;
-        }
+    .settings-header {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+      font-weight: 600;
+    }
 
-        .code-snippet span {
-            background: #ffffffd9;
-            padding: 0.3rem 1rem;
-            border-radius: 40px;
-            color: #2d3e6e;
-            font-weight: 500;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-            letter-spacing: 0.3px;
-        }
+    .settings-section {
+      padding: 12px 12px 14px;
+      border-bottom: 1px solid #edf1f5;
+    }
 
-        .code-snippet span i {
-            font-style: normal;
-            font-weight: 600;
-            color: #2266cc;
-        }
+    .settings-section:last-child {
+      border-bottom: 0;
+    }
 
-        /* 底部优雅脚注 */
-        .footer-note {
-            margin-top: 2.5rem;
-            font-size: 0.75rem;
-            color: #6f7c8f;
-            letter-spacing: 0.3px;
-            border-top: 1px solid rgba(128, 128, 160, 0.2);
-            padding-top: 1.5rem;
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-        }
+    .settings-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
 
-        .footer-note p {
-            opacity: 0.7;
-        }
+    .settings-actions {
+      display: grid;
+      gap: 8px;
+    }
 
-        .footer-note .heart {
-            color: #d46b8c;
-            font-weight: 500;
-        }
+    .settings-btn {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 14px;
+      padding: 11px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+    }
 
-        /* 响应式细节：让移动端内边距舒适 */
-        @media (max-width: 560px) {
-            .hello-card {
-                padding: 2rem 1.5rem;
-                border-radius: 2rem;
-            }
-            .description {
-                font-size: 1rem;
-                max-width: 100%;
-            }
-            .code-snippet span {
-                font-size: 0.7rem;
-                padding: 0.2rem 0.7rem;
-            }
-            .world-icon {
-                font-size: 3.2rem;
-            }
-        }
+    .settings-btn:hover {
+      background: var(--panel-2);
+      border-color: #cbd5e1;
+      transform: translateY(-1px);
+    }
 
-        /* 入口淡入动画（初次加载轻盈感） */
-        @keyframes cardFadeUp {
-            0% {
-                opacity: 0;
-                transform: translateY(24px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    .settings-btn.active {
+      background: var(--accent-2);
+      border-color: rgba(37, 99, 235, 0.28);
+      color: #1d4ed8;
+      font-weight: 600;
+    }
 
-        .hello-card {
-            animation: cardFadeUp 0.65s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
-        }
+    .engine-row {
+      display: grid;
+      gap: 8px;
+    }
 
-        /* 添加些微交互点缀 */
-        .hello-card:active {
-            transform: scale(0.98);
-            transition: transform 0.1s;
-        }
-    </style>
+    .engine-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 14px;
+      padding: 10px 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.16s ease, border-color 0.16s ease;
+    }
+
+    .engine-option:hover {
+      background: var(--panel-2);
+      border-color: #cbd5e1;
+    }
+
+    .engine-option.active {
+      background: var(--accent-2);
+      border-color: rgba(37, 99, 235, 0.28);
+    }
+
+    .engine-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      flex: none;
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .engine-icon img {
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .engine-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .engine-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .engine-desc {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .hero {
+      width: min(980px, 100%);
+      margin: 0 auto;
+      padding-top: clamp(28px, 7vh, 88px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .search-shell {
+      width: min(840px, 100%);
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+      height: 66px;
+    }
+
+    .engine-selector {
+      position: relative;
+      display: flex;
+      align-items: center;
+      margin-left: 22px;
+    }
+
+    .engine-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0.16s, opacity 0.16s, transform 0.16s;
+      z-index: 30;
+    }
+
+    .engine-dropdown.open {
+      visibility: visible;
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .engine-dropdown-btn {
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: background 0.16s, transform 0.12s;
+    }
+
+    .engine-dropdown-btn img {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+    }
+
+    .engine-dropdown-btn:hover {
+      background: var(--panel-2);
+    }
+
+    .engine-dropdown-btn.active {
+      background: var(--accent-2);
+    }
+
+    .engine-dropdown-btn.active img {
+      transform: scale(1.1);
+    }
+
+    .engine-simple-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      object-fit: contain;
+      flex: none;
+      cursor: pointer;
+      transition: transform 0.16s ease, filter 0.16s ease;
+    }
+
+    .engine-simple-icon:hover {
+      transform: scale(1.08);
+      filter: brightness(0.95);
+    }
+
+    .search-form {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 0 18px 0 14px;
+    }
+
+    .search-input {
+      width: 100%;
+      border: 0;
+      outline: none;
+      background: transparent;
+      font-size: 18px;
+      color: var(--text);
+    }
+
+    .search-input::placeholder {
+      color: #94a3b8;
+    }
+
+    .search-button {
+      width: 46px;
+      height: 46px;
+      border: 0;
+      border-radius: 16px;
+      background: var(--accent);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      flex: none;
+      transition: transform 0.16s ease, filter 0.16s ease;
+    }
+
+    .search-button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.02);
+    }
+
+    .search-button svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .shortcuts-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+      width: min(1180px, 100%);
+      margin: 0 auto;
+    }
+
+    .shortcut-slot {
+      position: relative;
+      width: 80px;
+      cursor: pointer;
+      transition: transform 0.16s ease;
+    }
+
+    .shortcut-slot:hover {
+      transform: translateY(-2px);
+    }
+
+    .shortcut-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .shortcut-icon {
+      width: 50px;
+      height: 50px;
+      display: grid;
+      place-items: center;
+      flex: none;
+      transition: filter 0.16s ease;
+    }
+
+    .shortcut-slot:hover .shortcut-icon {
+      filter: brightness(0.95);
+    }
+
+    .shortcut-icon img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      display: block;
+      border-radius: 14px;
+    }
+
+    .shortcut-name {
+      font-size: 12px;
+      line-height: 1.25;
+      color: var(--text);
+      word-break: break-word;
+      max-width: 100%;
+      display: -webkit-box;
+      line-clamp: 2;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 30px;
+    }
+
+    .shortcut-more {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      opacity: 0;
+      transition: opacity 0.16s ease;
+      z-index: 2;
+    }
+
+    .shortcut-slot:hover .shortcut-more {
+      opacity: 1;
+    }
+
+    .more-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      border: 0;
+      background: rgba(255, 255, 255, 0.95);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: var(--muted);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      transition: background 0.16s, color 0.16s;
+    }
+
+    .more-btn:hover {
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    .more-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .shortcut-context-menu {
+      position: absolute;
+      width: 120px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
+      padding: 6px;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      z-index: 50;
+    }
+
+    .shortcut-context-menu.open {
+      display: flex;
+      animation: fadeIn 0.12s ease-out;
+    }
+
+    .context-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      border: 0;
+      background: transparent;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text);
+      text-align: left;
+    }
+
+    .context-menu-item:hover {
+      background: var(--panel-2);
+    }
+
+    .context-menu-item.text-danger {
+      color: var(--danger);
+    }
+
+    .context-menu-item svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.34);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+      padding: 18px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+      animation: fadeIn 0.16s ease-out;
+    }
+
+    .modal {
+      width: min(460px, 100%);
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 24px;
+      box-shadow: 0 22px 60px rgba(15, 23, 42, 0.18);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid #edf1f5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .modal-title {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .modal-body {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .field input {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: rgba(37, 99, 235, 0.5);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 0 18px 18px;
+    }
+
+    .action-btn {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 16px;
+      cursor: pointer;
+      background: #fff;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .action-btn.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .action-btn:hover {
+      filter: brightness(0.99);
+    }
+
+    .action-btn.danger {
+      border-color: rgba(220, 38, 38, 0.18);
+      color: var(--danger);
+      background: #fff;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        padding: 18px 14px 14px;
+      }
+
+      .settings-panel {
+        right: 14px;
+        width: min(320px, calc(100vw - 28px));
+      }
+
+      .hero {
+        padding-top: 18px;
+      }
+
+      .shortcuts-grid {
+        width: 100%;
+        gap: 12px;
+      }
+
+      .shortcut-slot {
+        width: 72px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="hello-card">
-        <!-- 具象化“世界”元素 地球仪 + 热情问候 -->
-        <div class="world-icon" aria-label="地球图标">🌍✨</div>
-        
-        <!-- 核心标题：惊艳渐变 Hello, World! -->
-        <h1 class="glow-text">Hello, World!</h1>
-        
-        <!-- 优雅分隔强化视觉 -->
-        <div class="divider"></div>
-        
-        <!-- 副文本：温暖且鼓舞人心 -->
-        <p class="description">
-            每一次「你好，世界」都是一段奇妙旅程的开始。<br>
-            创造、探索、连接 —— 欢迎来到属于你的数字宇宙。
-        </p>
-        
-        <!-- 趣味代码片：多种语言中 'Hello World' 的温馨映射，呼应技术情怀 -->
-        <div class="code-snippet">
-            <span>📟 <i>console</i>.log("<span style="color:#2c6e9e;">Hello World</span>")</span>
-            <span>🐍 <i>print</i>("<span style="color:#2c6e9e;">Hello World</span>")</span>
-            <span>☕ <i>System.out</i>.println("<span style="color:#2c6e9e;">Hello World</span>")</span>
-            <span>🎯 <i>fmt.Println</i>("<span style="color:#2c6e9e;">Hello World</span>")</span>
-        </div>
-
-        <!-- 底部简约但充满细节的注脚 -->
-        <div class="footer-note">
-            <p>✨ 从经典出发 · 创造无限可能 ✨</p>
-            <p>🌱 <span class="heart">❤️</span> 你好，世界 2026</p>
-        </div>
+  <div class="app" id="app">
+    <div class="action-column">
+      <button class="action-icon-btn" id="gearButton" aria-label="打开设置菜单" aria-expanded="false" title="设置">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 21v-7"/>
+          <path d="M4 10V3"/>
+          <path d="M12 21v-9"/>
+          <path d="M12 8V3"/>
+          <path d="M20 21v-5"/>
+          <path d="M20 12V3"/>
+          <path d="M1 14h6"/>
+          <path d="M9 8h6"/>
+          <path d="M17 16h6"/>
+        </svg>
+      </button>
+      <button class="action-icon-btn" id="topAddButton" aria-label="添加快捷链接" title="添加快捷链接">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+      </button>
     </div>
+
+    <aside class="settings-panel" id="settingsPanel" aria-label="设置面板">
+      <div class="settings-header">设置</div>
+      <div class="settings-section">
+        <div class="settings-label">搜索引擎</div>
+        <div class="engine-row" id="engineList"></div>
+      </div>
+    </aside>
+
+    <main class="hero">
+      <section class="search-shell" aria-label="搜索栏">
+        <div class="engine-selector">
+          <img class="engine-simple-icon" id="engineChipIcon" title="切换搜索引擎" alt="" />
+          <div class="engine-dropdown" id="engineDropdown"></div>
+        </div>
+        <form class="search-form" id="searchForm">
+          <input class="search-input" id="searchInput" type="text" placeholder="输入搜索内容" autocomplete="off" />
+          <button class="search-button" type="submit" aria-label="搜索">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="6.5"></circle>
+              <path d="m16 16 5 5"></path>
+            </svg>
+          </button>
+        </form>
+      </section>
+
+      <section class="shortcuts-grid" id="shortcutsGrid" aria-label="快捷方式列表">
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="shortcutModalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="shortcutModalTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="shortcutModalTitle">添加快捷链接</div>
+        <button class="action-icon-btn" id="closeShortcutModalBtn" aria-label="关闭窗口">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 6 18 18"></path>
+            <path d="M18 6 6 18"></path>
+          </svg>
+        </button>
+      </div>
+      <form id="shortcutForm">
+        <div class="modal-body">
+          <div class="field">
+            <label for="shortcutName">名称</label>
+            <input id="shortcutName" type="text" maxlength="32" placeholder="可留空，自动根据网址生成" />
+          </div>
+          <div class="field">
+            <label for="shortcutUrl">网址</label>
+            <input id="shortcutUrl" type="text" placeholder="https://example.com" required />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="action-btn" type="button" id="cancelShortcutBtn">取消</button>
+          <button class="action-btn primary" type="submit" id="saveShortcutBtn">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="shortcut-context-menu" id="shortcutContextMenu">
+    <button class="context-menu-item" id="ctxEditBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+      重命名
+    </button>
+    <button class="context-menu-item text-danger" id="ctxDeleteBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M6 6l1 15h10l1-15"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
+      删除
+    </button>
+  </div>
+
+  <script>
+    const STORAGE_KEYS = {
+      shortcuts: 'newtab.shortcuts.v1',
+      engine: 'newtab.engine.v1'
+    };
+
+    const engines = [
+      {
+        id: 'bing',
+        name: '必应',
+        description: 'Bing 搜索',
+        url: 'https://www.bing.com/search?q=',
+        icon: ''
+      },
+      {
+        id: 'google',
+        name: '谷歌',
+        description: 'Google 搜索',
+        url: 'https://www.google.com/search?q=',
+        icon: ''
+      },
+      {
+        id: 'github',
+        name: 'GitHub',
+        description: 'GitHub 搜索',
+        url: 'https://github.com/search?q=',
+        icon: ''
+      },
+      {
+        id: 'baidu',
+        name: '百度',
+        description: 'Baidu 搜索',
+        url: 'https://www.baidu.com/s?wd=',
+        icon: ''
+      }
+    ];
+
+    const app = document.getElementById('app');
+    const gearButton = document.getElementById('gearButton');
+    const topAddButton = document.getElementById('topAddButton');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const engineList = document.getElementById('engineList');
+    const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
+    const engineChipIcon = document.getElementById('engineChipIcon');
+    const engineDropdown = document.getElementById('engineDropdown');
+    const shortcutsGrid = document.getElementById('shortcutsGrid');
+    const shortcutModalBackdrop = document.getElementById('shortcutModalBackdrop');
+    const shortcutModalTitle = document.getElementById('shortcutModalTitle');
+    const shortcutForm = document.getElementById('shortcutForm');
+    const shortcutNameInput = document.getElementById('shortcutName');
+    const shortcutUrlInput = document.getElementById('shortcutUrl');
+    const closeShortcutModalBtn = document.getElementById('closeShortcutModalBtn');
+    const cancelShortcutBtn = document.getElementById('cancelShortcutBtn');
+    const saveShortcutBtn = document.getElementById('saveShortcutBtn');
+
+    const state = {
+      shortcuts: loadShortcuts(),
+      engineId: loadEngine(),
+      editingIndex: null,
+      contextMenuIndex: null
+    };
+
+    function loadShortcuts() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEYS.shortcuts) || '[]');
+        return Array.isArray(parsed) ? parsed.slice(0, 40) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function loadEngine() {
+      const stored = localStorage.getItem(STORAGE_KEYS.engine);
+      return engines.some((engine) => engine.id === stored) ? stored : 'bing';
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function hashString(value) {
+      let hash = 0;
+      for (let index = 0; index < value.length; index += 1) {
+        hash = ((hash << 5) - hash + value.charCodeAt(index)) | 0;
+      }
+      return Math.abs(hash);
+    }
+
+    function iconColor(value) {
+      const colors = ['#2563eb', '#0f766e', '#7c3aed', '#d97706', '#db2777', '#0284c7', '#16a34a', '#ef4444'];
+      return colors[hashString(value) % colors.length];
+    }
+
+    function svgDataUri(svg) {
+      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    }
+
+    function createLetterIcon(label, key, background = iconColor(key), foreground = '#ffffff') {
+      const safeLabel = escapeHtml(label);
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+          <rect width="64" height="64" rx="18" fill="${background}" />
+          <text x="32" y="40" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="${foreground}">${safeLabel}</text>
+        </svg>
+      `;
+      return svgDataUri(svg.replace(/\s+/g, ' ').trim());
+    }
+
+    function createEngineIcon(engine) {
+      const text = engine.id === 'github' ? 'GH' : engine.name.charAt(0);
+      const background = engine.id === 'bing'
+        ? '#0ea5e9'
+        : engine.id === 'google'
+          ? '#2563eb'
+          : engine.id === 'github'
+            ? '#111827'
+            : '#2563eb';
+      return createLetterIcon(text, engine.id, background);
+    }
+
+    function saveShortcuts() {
+      localStorage.setItem(STORAGE_KEYS.shortcuts, JSON.stringify(state.shortcuts.slice(0, 40)));
+    }
+
+    function saveEngine() {
+      localStorage.setItem(STORAGE_KEYS.engine, state.engineId);
+    }
+
+    function getCurrentEngine() {
+      return engines.find((engine) => engine.id === state.engineId) || engines[0];
+    }
+
+    function normalizeUrl(value) {
+      const trimmed = value.trim();
+      if (!trimmed) return '';
+      if (/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmed)) return trimmed;
+      return `https://${trimmed}`;
+    }
+
+    function safeHostname(url) {
+      try {
+        return new URL(url).hostname.replace(/^www\./, '');
+      } catch {
+        return '快捷链接';
+      }
+    }
+
+    function shortcutInitial(name) {
+      const text = (name || '').trim();
+      return text ? text.charAt(0).toUpperCase() : '•';
+    }
+
+    function engineMarkup(engine) {
+      return `<img src="${createEngineIcon(engine)}" alt="${engine.name}">`;
+    }
+
+    function renderEngineList() {
+      engineList.innerHTML = engines.map((engine) => {
+        const active = engine.id === state.engineId ? 'active' : '';
+        return `
+          <button class="engine-option ${active}" data-engine="${engine.id}" type="button">
+            <span class="engine-icon">${engineMarkup(engine)}</span>
+            <span class="engine-meta">
+              <span class="engine-name">${engine.name}</span>
+              <span class="engine-desc">${engine.description}</span>
+            </span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function renderEngineChip() {
+      const engine = getCurrentEngine();
+      engineChipIcon.src = createEngineIcon(engine);
+      engineChipIcon.alt = engine.name;
+    }
+
+    function renderEngineDropdown() {
+      engineDropdown.innerHTML = engines.map(engine => `
+        <button class="engine-dropdown-btn ${engine.id === state.engineId ? 'active' : ''}" data-dropdown-id="${engine.id}" type="button" title="${engine.name}">
+          <img src="${createEngineIcon(engine)}" alt="${engine.name}">
+        </button>
+      `).join('');
+    }
+
+    function makeFavicon(url, label) {
+      try {
+        const host = new URL(url).hostname.replace(/^www\./, '');
+        const initial = (label || host).trim().charAt(0).toUpperCase() || '•';
+        return createLetterIcon(initial, host);
+      } catch {
+        return createLetterIcon('•', url);
+      }
+    }
+
+    function renderShortcuts() {
+      shortcutsGrid.innerHTML = state.shortcuts.map((shortcut, index) => {
+        const iconHtml = shortcut.icon
+          ? `<img src="${shortcut.icon}" alt="">`
+          : shortcutInitial(shortcut.name);
+
+        return `
+          <div class="shortcut-slot" data-shortcut-index="${index}">
+            <div class="shortcut-more">
+              <button class="more-btn" type="button" data-action="more" data-index="${index}" aria-label="更多选项">
+                <svg width="16" height="16" viewBox="0 0 16 16"><path d="M5 8a1 1 0 11-2 0 1 1 0 012 0zm4 0a1 1 0 11-2 0 1 1 0 012 0zm3 1a1 1 0 100-2 1 1 0 000 2z"></path></svg>
+              </button>
+            </div>
+            <div class="shortcut-inner" data-open-url="${shortcut.url}">
+              <div class="shortcut-icon">${iconHtml}</div>
+              <div class="shortcut-name">${shortcut.name}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderAll() {
+      renderEngineList();
+      renderEngineDropdown();
+      renderEngineChip();
+      renderShortcuts();
+    }
+
+    function openSettings() {
+      settingsPanel.classList.add('open');
+      gearButton.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeSettings() {
+      settingsPanel.classList.remove('open');
+      gearButton.setAttribute('aria-expanded', 'false');
+    }
+
+    function toggleSettings() {
+      settingsPanel.classList.contains('open') ? closeSettings() : openSettings();
+    }
+
+    function openShortcutModal(index = null) {
+      state.editingIndex = index;
+      const isEditing = typeof index === 'number';
+      shortcutModalTitle.textContent = isEditing ? '编辑快捷链接' : '添加快捷链接';
+      saveShortcutBtn.textContent = isEditing ? '保存修改' : '保存';
+
+      if (isEditing) {
+        const shortcut = state.shortcuts[index];
+        shortcutNameInput.value = shortcut?.name || '';
+        shortcutUrlInput.value = shortcut?.url || '';
+      } else {
+        shortcutForm.reset();
+      }
+
+      shortcutModalBackdrop.classList.add('open');
+      shortcutModalBackdrop.setAttribute('aria-hidden', 'false');
+      setTimeout(() => shortcutNameInput.focus(), 0);
+    }
+
+    function closeShortcutModal() {
+      shortcutModalBackdrop.classList.remove('open');
+      shortcutModalBackdrop.setAttribute('aria-hidden', 'true');
+      state.editingIndex = null;
+      shortcutForm.reset();
+    }
+
+    function addOrUpdateShortcut(name, url) {
+      const normalizedUrl = normalizeUrl(url);
+      if (!normalizedUrl) return;
+
+      const shortcut = {
+        name: name.trim() || safeHostname(normalizedUrl),
+        url: normalizedUrl,
+        icon: makeFavicon(normalizedUrl, name || safeHostname(normalizedUrl))
+      };
+
+      if (state.editingIndex === null) {
+        if (state.shortcuts.length >= 40) {
+          alert('快捷链接已经达到 40 个上限。');
+          return;
+        }
+        state.shortcuts.push(shortcut);
+      } else {
+        state.shortcuts[state.editingIndex] = shortcut;
+      }
+
+      saveShortcuts();
+      renderShortcuts();
+      closeShortcutModal();
+    }
+
+    function deleteShortcut(index) {
+      if (index < 0 || index >= state.shortcuts.length) return;
+      state.shortcuts.splice(index, 1);
+      saveShortcuts();
+      renderShortcuts();
+    }
+
+    function navigateToSearch(query) {
+      const keyword = query.trim();
+      if (!keyword) return;
+      const engine = getCurrentEngine();
+      const url = `${engine.url}${encodeURIComponent(keyword)}`;
+      window.location.href = url;
+    }
+
+    topAddButton.addEventListener('click', () => {
+      openShortcutModal();
+    });
+
+    gearButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      toggleSettings();
+    });
+
+    engineChipIcon.addEventListener('click', (event) => {
+      event.stopPropagation();
+      engineDropdown.classList.toggle('open');
+    });
+
+    engineDropdown.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const btn = event.target.closest('[data-dropdown-id]');
+      if (!btn) return;
+      state.engineId = btn.dataset.dropdownId;
+      saveEngine();
+      renderEngineList();
+      renderEngineDropdown();
+      renderEngineChip();
+      engineDropdown.classList.remove('open');
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!settingsPanel.contains(event.target) && !gearButton.contains(event.target)) {
+        closeSettings();
+      }
+      if (!engineDropdown.contains(event.target) && event.target !== engineChipIcon) {
+        engineDropdown.classList.remove('open');
+      }
+    });
+
+    settingsPanel.addEventListener('click', (event) => event.stopPropagation());
+
+    engineList.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-engine]');
+      if (!button) return;
+      state.engineId = button.dataset.engine;
+      saveEngine();
+      renderEngineList();
+      renderEngineChip();
+    });
+
+    searchForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      navigateToSearch(searchInput.value);
+    });
+
+    // --- Shortcut Context Menu ---
+    const shortcutContextMenu = document.getElementById('shortcutContextMenu');
+    const ctxEditBtn = document.getElementById('ctxEditBtn');
+    const ctxDeleteBtn = document.getElementById('ctxDeleteBtn');
+
+    function closeContextMenu() {
+      shortcutContextMenu.style.display = '';
+      shortcutContextMenu.classList.remove('open');
+      state.contextMenuIndex = null;
+    }
+
+    ctxEditBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (typeof state.contextMenuIndex === 'number') {
+        openShortcutModal(state.contextMenuIndex);
+      }
+      closeContextMenu();
+    });
+
+    ctxDeleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (typeof state.contextMenuIndex === 'number') {
+        deleteShortcut(state.contextMenuIndex);
+      }
+      closeContextMenu();
+    });
+
+    document.addEventListener('click', () => {
+      closeContextMenu();
+    });
+
+    shortcutsGrid.addEventListener('click', (event) => {
+      const moreBtn = event.target.closest('[data-action="more"]');
+      const openWrapper = event.target.closest('[data-open-url]');
+
+      if (moreBtn) {
+        event.stopPropagation();
+        const index = Number(moreBtn.dataset.index);
+        state.contextMenuIndex = index;
+        
+        // Position menu below the button
+        const rect = moreBtn.getBoundingClientRect();
+        shortcutContextMenu.classList.add('open');
+        
+        // Basic positioning
+        let top = rect.bottom + window.scrollY;
+        let left = rect.left + window.scrollX;
+        
+        shortcutContextMenu.style.top = `${top}px`;
+        shortcutContextMenu.style.left = `${left}px`;
+        
+        return;
+      }
+
+      if (openWrapper) {
+        window.location.href = openWrapper.dataset.openUrl;
+      }
+    });
+
+    shortcutForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      addOrUpdateShortcut(shortcutNameInput.value, shortcutUrlInput.value);
+    });
+
+    shortcutModalBackdrop.addEventListener('click', (event) => {
+      if (event.target === shortcutModalBackdrop) closeShortcutModal();
+    });
+
+    closeShortcutModalBtn.addEventListener('click', closeShortcutModal);
+    cancelShortcutBtn.addEventListener('click', closeShortcutModal);
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeSettings();
+        if (shortcutModalBackdrop.classList.contains('open')) closeShortcutModal();
+      }
+    });
+
+    renderAll();
+  </script>
 </body>
 </html>
