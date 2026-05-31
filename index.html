@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>New Tab</title>
+  <title>MyNewTab</title>
   <style>
     :root {
       --bg: #f4f6f8;
@@ -341,20 +341,17 @@
     .engine-icon {
       width: 28px;
       height: 28px;
-      border-radius: 10px;
       display: grid;
       place-items: center;
       flex: none;
-      overflow: hidden;
-      background: var(--panel);
-      border: 1px solid rgba(148, 163, 184, 0.25);
     }
 
     .engine-icon img {
-      width: 18px;
-      height: 18px;
+      width: 28px;
+      height: 28px;
       object-fit: contain;
       display: block;
+      border-radius: 10px;
     }
 
     .engine-meta {
@@ -438,25 +435,23 @@
       cursor: pointer;
       display: grid;
       place-items: center;
-      transition: background 0.16s, transform 0.12s;
+      padding: 0;
     }
 
     .engine-dropdown-btn img {
-      width: 20px;
-      height: 20px;
+      width: 28px;
+      height: 28px;
       object-fit: contain;
+      border-radius: 8px;
     }
 
-    .engine-dropdown-btn:hover {
-      background: var(--panel-2);
-    }
-
-    .engine-dropdown-btn.active {
-      background: var(--accent-2);
+    .engine-dropdown-btn:hover img {
+      filter: brightness(0.92);
     }
 
     .engine-dropdown-btn.active img {
-      transform: scale(1.1);
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
     }
 
     .engine-simple-icon {
@@ -1329,7 +1324,7 @@
       if (!keyword) return;
       const engine = getCurrentEngine();
       const url = `${engine.url}${encodeURIComponent(keyword)}`;
-      window.location.href = url;
+      window.open(url, '_blank');
     }
 
     topAddButton.addEventListener('click', () => {
@@ -1445,7 +1440,7 @@
       }
 
       if (openWrapper) {
-        window.location.href = openWrapper.dataset.openUrl;
+        window.open(openWrapper.dataset.openUrl, '_blank');
       }
     });
 
