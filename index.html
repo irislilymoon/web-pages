@@ -77,6 +77,121 @@
       overflow: hidden;
     }
 
+    /* Wallpaper Layer */
+    .wallpaper-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    html.has-wallpaper,
+    html.has-wallpaper body {
+      background: transparent !important;
+    }
+
+    html.has-wallpaper .app {
+      position: relative;
+      z-index: 1;
+    }
+
+    .wallpaper-layer img,
+    .wallpaper-layer video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Wallpaper Upload Section */
+    .wallpaper-upload-area {
+      border: 2px dashed var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.16s ease, background 0.16s ease;
+      background: var(--btn-bg);
+    }
+
+    .wallpaper-upload-area:hover {
+      border-color: var(--accent);
+      background: var(--accent-2);
+    }
+
+    .wallpaper-upload-area svg {
+      width: 28px;
+      height: 28px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .wallpaper-upload-area p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .wallpaper-upload-area p span {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .wallpaper-preview {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .wallpaper-preview img,
+    .wallpaper-preview video {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      display: block;
+      border-radius: 12px;
+    }
+
+    .wallpaper-preview-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      opacity: 0;
+      transition: opacity 0.16s ease;
+      border-radius: 12px;
+    }
+
+    .wallpaper-preview:hover .wallpaper-preview-overlay {
+      opacity: 1;
+    }
+
+    .wallpaper-remove-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 0;
+      background: rgba(255,255,255,0.9);
+      color: var(--danger);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform 0.16s ease;
+    }
+
+    .wallpaper-remove-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .wallpaper-remove-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
     .app {
       position: relative;
       width: 100%;
@@ -122,12 +237,14 @@
       top: 24px;
       right: 76px;
       width: 320px;
+      max-height: calc(100vh - 48px);
       background: var(--glass-panel);
       backdrop-filter: blur(16px);
       border: 1px solid var(--line);
       border-radius: 20px;
       box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
       display: none;
       z-index: 20;
     }
@@ -146,7 +263,7 @@
 
     .settings-section {
       padding: 12px 12px 14px;
-      border-bottom: 1px solid #edf1f5;
+      border-bottom: 1px solid var(--line);
     }
 
     .settings-section:last-child {
@@ -403,23 +520,58 @@
     }
 
     .shortcuts-grid {
+      position: relative;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 14px;
       width: min(1180px, 100%);
       margin: 0 auto;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .shortcut-slot {
       position: relative;
       width: 80px;
       cursor: pointer;
-      transition: transform 0.16s ease;
+      transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1.2), opacity 0.25s ease;
+    }
+
+    .shortcut-slot.drag-hover {
+      transform: scale(1.08);
+    }
+
+    .drag-ghost {
+      position: fixed;
+      z-index: 200;
+      pointer-events: none;
+      opacity: 0.92;
+      transform: scale(1.1);
+      filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.18));
+      border-radius: 16px;
+      background: var(--panel);
+      padding: 6px 8px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .drag-ghost .shortcut-icon {
+      box-shadow: none;
     }
 
     .shortcut-slot:hover {
       transform: translateY(-2px);
+    }
+
+    .shortcut-slot.dragging,
+    .shortcut-slot.dragging:hover {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.9);
     }
 
     .shortcut-inner {
@@ -470,8 +622,8 @@
 
     .shortcut-more {
       position: absolute;
-      top: 6px;
-      right: 6px;
+      top: 0;
+      left: 65px;
       opacity: 0;
       transition: opacity 0.16s ease;
       z-index: 2;
@@ -484,25 +636,28 @@
     .more-btn {
       width: 26px;
       height: 26px;
+      padding: 0;
       border-radius: 8px;
-      border: 0;
+      border: 2px solid var(--muted);
       background: var(--glass-dropdown);
       display: grid;
       place-items: center;
       cursor: pointer;
       color: var(--muted);
       box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-      transition: background 0.16s, color 0.16s;
+      transition: background 0.16s, color 0.16s, border-color 0.16s;
     }
 
     .more-btn:hover {
       background: var(--panel-2);
       color: var(--text);
+      border-color: var(--text);
     }
 
     .more-btn svg {
       width: 16px;
       height: 16px;
+      display: block;
     }
 
     .shortcut-context-menu {
@@ -580,7 +735,7 @@
 
     .modal-header {
       padding: 16px 18px 14px;
-      border-bottom: 1px solid #edf1f5;
+      border-bottom: 1px solid var(--line);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -630,6 +785,23 @@
       justify-content: flex-end;
       gap: 10px;
       padding: 0 18px 18px;
+      align-items: center;
+    }
+
+    .modal-error {
+      display: none;
+      color: var(--danger);
+      font-size: 13px;
+      margin-right: auto;
+      opacity: 0;
+      transform: translateX(-4px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .modal-error.show {
+      display: block;
+      opacity: 1;
+      transform: translateX(0);
     }
 
     .action-btn {
@@ -637,7 +809,7 @@
       border-radius: 14px;
       padding: 10px 16px;
       cursor: pointer;
-      background: #fff;
+      background: var(--btn-bg);
       color: var(--text);
       font-weight: 600;
     }
@@ -655,7 +827,7 @@
     .action-btn.danger {
       border-color: rgba(220, 38, 38, 0.18);
       color: var(--danger);
-      background: #fff;
+      background: var(--btn-bg);
     }
 
     @keyframes fadeIn {
@@ -689,6 +861,7 @@
   </style>
 </head>
 <body>
+  <div class="wallpaper-layer" id="wallpaperLayer"></div>
   <div class="app" id="app">
     <div class="action-column">
       <button class="action-icon-btn" id="gearButton" aria-label="打开设置菜单" aria-expanded="false" title="设置">
@@ -733,6 +906,26 @@
         <div class="settings-label">搜索引擎</div>
         <div class="engine-row" id="engineList"></div>
       </div>
+      <div class="settings-section">
+        <div class="settings-label">壁纸设置</div>
+        <div id="wallpaperPreview" style="display:none;">
+          <div class="wallpaper-preview">
+            <div id="wallpaperPreviewContent"></div>
+            <div class="wallpaper-preview-overlay">
+              <button class="wallpaper-remove-btn" id="wallpaperRemoveBtn" title="移除壁纸">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M6 6l1 15h10l1-15"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div id="wallpaperUploadWrapper">
+          <div class="wallpaper-upload-area" id="wallpaperUploadArea">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <p>点击或拖拽上传<br><span>图片 / MP4 视频</span></p>
+          </div>
+        </div>
+        <input type="file" id="wallpaperInput" accept="image/*,video/mp4" style="display:none;" />
+      </div>
     </aside>
 
     <main class="hero">
@@ -768,18 +961,19 @@
           </svg>
         </button>
       </div>
-      <form id="shortcutForm">
+      <form id="shortcutForm" autocomplete="off">
         <div class="modal-body">
           <div class="field">
             <label for="shortcutName">名称</label>
-            <input id="shortcutName" type="text" maxlength="32" placeholder="可留空，自动根据网址生成" />
+            <input id="shortcutName" type="text" maxlength="32" placeholder="可留空，自动根据网址生成" autocomplete="off" />
           </div>
           <div class="field">
             <label for="shortcutUrl">网址</label>
-            <input id="shortcutUrl" type="text" placeholder="https://example.com" required />
+            <input id="shortcutUrl" type="text" placeholder="https://example.com" autocomplete="off" />
           </div>
         </div>
         <div class="modal-actions">
+          <span class="modal-error" id="shortcutError"></span>
           <button class="action-btn" type="button" id="cancelShortcutBtn">取消</button>
           <button class="action-btn primary" type="submit" id="saveShortcutBtn">保存</button>
         </div>
@@ -856,6 +1050,7 @@
     const closeShortcutModalBtn = document.getElementById('closeShortcutModalBtn');
     const cancelShortcutBtn = document.getElementById('cancelShortcutBtn');
     const saveShortcutBtn = document.getElementById('saveShortcutBtn');
+    const shortcutError = document.getElementById('shortcutError');
 
     function applyTheme(isDark) {
       if (isDark) {
@@ -1034,7 +1229,7 @@
           <div class="shortcut-slot" data-shortcut-index="${index}">
             <div class="shortcut-more">
               <button class="more-btn" type="button" data-action="more" data-index="${index}" aria-label="更多选项">
-                <svg width="16" height="16" viewBox="0 0 16 16"><path d="M5 8a1 1 0 11-2 0 1 1 0 012 0zm4 0a1 1 0 11-2 0 1 1 0 012 0zm3 1a1 1 0 100-2 1 1 0 000 2z"></path></svg>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M5 8a1 1 0 11-2 0 1 1 0 012 0zm4 0a1 1 0 11-2 0 1 1 0 012 0zm3 1a1 1 0 100-2 1 1 0 000 2z"></path></svg>
               </button>
             </div>
             <div class="shortcut-inner" data-open-url="${shortcut.url}">
@@ -1089,6 +1284,7 @@
     function closeShortcutModal() {
       shortcutModalBackdrop.classList.remove('open');
       shortcutModalBackdrop.setAttribute('aria-hidden', 'true');
+      shortcutError.classList.remove('show');
       state.editingIndex = null;
       shortcutForm.reset();
     }
@@ -1105,11 +1301,14 @@
 
       if (state.editingIndex === null) {
         if (state.shortcuts.length >= 40) {
-          alert('快捷链接已经达到 40 个上限。');
+          shortcutError.textContent = '快捷链接已达 40 个上限';
+          shortcutError.classList.add('show');
           return;
         }
+        shortcutError.classList.remove('show');
         state.shortcuts.push(shortcut);
       } else {
+        shortcutError.classList.remove('show');
         state.shortcuts[state.editingIndex] = shortcut;
       }
 
@@ -1222,6 +1421,7 @@
     });
 
     shortcutsGrid.addEventListener('click', (event) => {
+      if (justDragged) return;
       const moreBtn = event.target.closest('[data-action="more"]');
       const openWrapper = event.target.closest('[data-open-url]');
 
@@ -1251,6 +1451,8 @@
 
     shortcutForm.addEventListener('submit', (event) => {
       event.preventDefault();
+      const url = shortcutUrlInput.value.trim();
+      if (!url) return;
       addOrUpdateShortcut(shortcutNameInput.value, shortcutUrlInput.value);
     });
 
@@ -1267,6 +1469,421 @@
         if (shortcutModalBackdrop.classList.contains('open')) closeShortcutModal();
       }
     });
+
+    // --- Drag to Reorder ---
+    let drag = null;
+    let justDragged = false;
+
+    function makeGhost(sourceSlot, pointerX, pointerY) {
+      const icon = sourceSlot.querySelector('.shortcut-icon');
+      const name = sourceSlot.querySelector('.shortcut-name');
+      const ghost = document.createElement('div');
+      ghost.className = 'drag-ghost';
+      ghost.innerHTML = `
+        <div class="shortcut-icon">${icon ? icon.innerHTML : ''}</div>
+        <div class="shortcut-name" style="font-size:12px;line-height:1.25;color:var(--text);word-break:break-word;max-width:80px;text-align:center;">${name ? name.textContent : ''}</div>
+      `;
+      ghost.style.left = pointerX + 'px';
+      ghost.style.top = pointerY + 'px';
+      document.body.appendChild(ghost);
+      return ghost;
+    }
+
+    function applyDragShift(x, y) {
+      const draggingSlot = shortcutsGrid.querySelector('.shortcut-slot.dragging');
+      if (!draggingSlot) return;
+
+      const children = Array.from(shortcutsGrid.children);
+      const dragIdx = children.indexOf(draggingSlot);
+
+      let targetNode = null;
+      let newIdx = dragIdx;
+
+      const gridRect = shortcutsGrid.getBoundingClientRect();
+
+      for (let i = 0; i < children.length; i++) {
+        if (i === dragIdx) continue;
+        const slot = children[i];
+        
+        // Compute un-transformed layout box to avoid animation-induced layout thrashing
+        const left = gridRect.left + slot.offsetLeft;
+        const top = gridRect.top + slot.offsetTop;
+        const right = left + slot.offsetWidth;
+        const bottom = top + slot.offsetHeight;
+        
+        // 15% inner padding to prevent rapid flickering on edges
+        const padX = slot.offsetWidth * 0.15;
+        const padY = slot.offsetHeight * 0.15;
+
+        // Check if pointer is well inside this slot
+        if (x >= left + padX && x <= right - padX && y >= top + padY && y <= bottom - padY) {
+          targetNode = slot;
+          newIdx = i;
+          break;
+        }
+      }
+
+      if (newIdx === dragIdx || !targetNode) return;
+
+      // Apply FLIP for seamless DOM reordering
+      const firstPos = new Map();
+      children.forEach(slot => {
+        slot.style.transition = 'none';
+        slot.style.transform = '';
+        firstPos.set(slot, slot.getBoundingClientRect());
+      });
+
+      if (newIdx > dragIdx) {
+        shortcutsGrid.insertBefore(draggingSlot, targetNode.nextSibling);
+      } else {
+        shortcutsGrid.insertBefore(draggingSlot, targetNode);
+      }
+
+      const newChildren = Array.from(shortcutsGrid.children);
+      newChildren.forEach(slot => {
+        if (slot === draggingSlot) return;
+        const f = firstPos.get(slot);
+        const l = slot.getBoundingClientRect();
+        if (f) {
+          const dx = f.left - l.left;
+          const dy = f.top - l.top;
+          if (dx !== 0 || dy !== 0) {
+            slot.style.transition = 'none';
+            slot.style.transform = `translate(${dx}px, ${dy}px)`;
+            slot.dataset.flip = '1';
+          }
+        }
+      });
+
+      shortcutsGrid.offsetLeft; // force layout ONCE for all elements
+
+      newChildren.forEach(slot => {
+        if (slot === draggingSlot) return;
+        if (slot.dataset.flip) {
+          slot.style.transition = ''; // restore css transition
+          slot.style.transform = '';
+          delete slot.dataset.flip;
+        }
+      });
+    }
+
+    function commitReorder() {
+      // Read the new sorted logic directly from DOM state
+      const newShortcuts = Array.from(shortcutsGrid.children).map(slot => {
+        const originalIndex = Number(slot.dataset.shortcutIndex);
+        return state.shortcuts[originalIndex];
+      });
+      
+      // Only trigger if reordered
+      let changed = false;
+      for(let i = 0; i < state.shortcuts.length; i++){
+        if(state.shortcuts[i] !== newShortcuts[i]) { changed = true; break; }
+      }
+      
+      if (changed) {
+        state.shortcuts = newShortcuts;
+        saveShortcuts();
+        renderShortcuts();
+      }
+    }
+
+    function endDrag(commit) {
+      if (!drag) return;
+      if (drag.ghost) {
+        drag.ghost.remove();
+        justDragged = true;
+        setTimeout(() => { justDragged = false; }, 300);
+      }
+      if (drag.timer) clearTimeout(drag.timer);
+      shortcutsGrid.querySelectorAll('.shortcut-slot').forEach(s => {
+        s.classList.remove('dragging');
+        s.style.transform = '';
+      });
+      if (commit) {
+        commitReorder();
+      } else {
+        // If aborted, Revert DOM to state.shortcuts visual order
+        renderShortcuts();
+      }
+      drag = null;
+    }
+
+    function activateGhost(slot, px, py) {
+      if (!drag || drag.ghost) return;
+      if (drag.timer) clearTimeout(drag.timer);
+      slot.classList.add('dragging');
+      drag.ghost = makeGhost(slot, px, py);
+    }
+
+    // Block native image drag so it doesn't interrupt pointer events
+    document.addEventListener('dragstart', (e) => {
+      if (e.target.closest('.shortcut-slot')) e.preventDefault();
+    });
+
+    // Document-level listeners
+    document.addEventListener('pointermove', (e) => {
+      if (!drag || !drag.downTime) return;
+
+      drag.latestX = e.clientX;
+      drag.latestY = e.clientY;
+
+      if (!drag.ghost) {
+        const dx = Math.abs(e.clientX - drag.startX);
+        const dy = Math.abs(e.clientY - drag.startY);
+        const elapsed = Date.now() - drag.downTime;
+
+        // Fast movement before hold time → abort (scrolling / normal drag)
+        // If movement is larger than threshold, ALWAYS cancel drag, to avoid sticking later.
+        if (dx > 10 || dy > 10) {
+          if (drag.timer) clearTimeout(drag.timer);
+          drag = null;
+          return;
+        }
+
+        // Held still for 200ms → activate now
+        if (elapsed >= 200 && dx <= 10 && dy <= 10) {
+          const slot = shortcutsGrid.querySelector(`[data-shortcut-index="${drag.fromIndex}"]`);
+          if (!slot) { drag = null; return; }
+          activateGhost(slot, e.clientX - drag.offsetX, e.clientY - drag.offsetY);
+        }
+        return;
+      }
+
+      // Ghost active → move it
+      drag.ghost.style.left = (e.clientX - drag.offsetX) + 'px';
+      drag.ghost.style.top = (e.clientY - drag.offsetY) + 'px';
+
+      applyDragShift(e.clientX, e.clientY);
+    });
+
+    function handlePointerEnd() {
+      if (!drag) return;
+      if (drag.ghost) {
+        endDrag(true);
+      } else {
+        if (drag.timer) clearTimeout(drag.timer);
+        drag = null;
+      }
+    }
+
+    document.addEventListener('pointerup', handlePointerEnd);
+    document.addEventListener('pointercancel', handlePointerEnd);
+
+    // Block clicks after a drag
+    document.addEventListener('click', (e) => {
+      if (justDragged) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      }
+    }, true);
+
+    document.addEventListener('contextmenu', (e) => {
+      if (justDragged || (drag && drag.ghost)) e.preventDefault();
+    });
+
+    shortcutsGrid.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
+      if (e.target.closest('[data-action="more"]')) return;
+      if (e.target.closest('.shortcut-context-menu')) return;
+
+      const slot = e.target.closest('.shortcut-slot');
+      if (!slot) return;
+
+      const fromIndex = Number(slot.dataset.shortcutIndex);
+      if (isNaN(fromIndex)) return;
+
+      const rect = slot.getBoundingClientRect();
+      drag = {
+        fromIndex,
+        toIndex: fromIndex,
+        ghost: null,
+        downTime: Date.now(),
+        startX: e.clientX,
+        startY: e.clientY,
+        latestX: e.clientX,
+        latestY: e.clientY,
+        offsetX: e.clientX - rect.left,
+        offsetY: e.clientY - rect.top,
+        timer: null
+      };
+
+      // Fallback timer: if user holds perfectly still (no pointermove), activate after 200ms
+      drag.timer = setTimeout(() => {
+        if (!drag || drag.ghost) return;
+        slot.classList.add('dragging');
+        drag.ghost = makeGhost(slot, drag.latestX - drag.offsetX, drag.latestY - drag.offsetY);
+      }, 200);
+    });
+
+    // --- Wallpaper Feature ---
+    const wallpaperLayer = document.getElementById('wallpaperLayer');
+    const wallpaperUploadArea = document.getElementById('wallpaperUploadArea');
+    const wallpaperUploadWrapper = document.getElementById('wallpaperUploadWrapper');
+    const wallpaperPreview = document.getElementById('wallpaperPreview');
+    const wallpaperPreviewContent = document.getElementById('wallpaperPreviewContent');
+    const wallpaperRemoveBtn = document.getElementById('wallpaperRemoveBtn');
+    const wallpaperInput = document.getElementById('wallpaperInput');
+
+    // IndexedDB helpers
+    const DB_NAME = 'newtab_wallpaper_db';
+    const DB_STORE = 'files';
+    const DB_KEY = 'current_wallpaper';
+
+    function openWallpaperDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = () => {
+          req.result.createObjectStore(DB_STORE);
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function saveWallpaperData(blob, type) {
+      const db = await openWallpaperDB();
+      const tx = db.transaction(DB_STORE, 'readwrite');
+      tx.objectStore(DB_STORE).put({ blob, type }, DB_KEY);
+      return new Promise((resolve, reject) => {
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function loadWallpaperData() {
+      const db = await openWallpaperDB();
+      const tx = db.transaction(DB_STORE, 'readonly');
+      const req = tx.objectStore(DB_STORE).get(DB_KEY);
+      return new Promise((resolve, reject) => {
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function deleteWallpaperData() {
+      const db = await openWallpaperDB();
+      const tx = db.transaction(DB_STORE, 'readwrite');
+      tx.objectStore(DB_STORE).delete(DB_KEY);
+      return new Promise((resolve, reject) => {
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    function showWallpaperPreview(blob, type) {
+      const url = URL.createObjectURL(blob);
+      if (type === 'video/mp4') {
+        wallpaperPreviewContent.innerHTML = `<video src="${url}" muted loop autoplay playsinline></video>`;
+      } else {
+        wallpaperPreviewContent.innerHTML = `<img src="${url}" alt="壁纸预览">`;
+      }
+      wallpaperPreview.style.display = 'block';
+      wallpaperUploadWrapper.style.display = 'none';
+    }
+
+    function hideWallpaperPreview() {
+      wallpaperPreviewContent.innerHTML = '';
+      wallpaperPreview.style.display = 'none';
+      wallpaperUploadWrapper.style.display = 'block';
+    }
+
+    function applyWallpaper(blob, type) {
+      wallpaperLayer.innerHTML = '';
+      const url = URL.createObjectURL(blob);
+      if (type === 'video/mp4') {
+        const video = document.createElement('video');
+        video.src = url;
+        video.autoplay = true;
+        video.loop = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+        wallpaperLayer.appendChild(video);
+      } else {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = '';
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+        wallpaperLayer.appendChild(img);
+      }
+      document.documentElement.classList.add('has-wallpaper');
+    }
+
+    function clearWallpaper() {
+      wallpaperLayer.innerHTML = '';
+      document.documentElement.classList.remove('has-wallpaper');
+    }
+
+    async function handleWallpaperFile(file) {
+      if (!file) return;
+      const validImage = file.type.startsWith('image/');
+      const validVideo = file.type === 'video/mp4';
+      if (!validImage && !validVideo) {
+        alert('请上传图片或 MP4 视频文件');
+        return;
+      }
+
+      // Limit size to 50MB
+      if (file.size > 50 * 1024 * 1024) {
+        alert('文件大小不能超过 50MB');
+        return;
+      }
+
+      await saveWallpaperData(file, file.type);
+      applyWallpaper(file, file.type);
+      showWallpaperPreview(file, file.type);
+    }
+
+    wallpaperUploadArea.addEventListener('click', () => {
+      wallpaperInput.click();
+    });
+
+    wallpaperInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) handleWallpaperFile(file);
+      wallpaperInput.value = '';
+    });
+
+    // Drag & drop support
+    wallpaperUploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      wallpaperUploadArea.style.borderColor = 'var(--accent)';
+      wallpaperUploadArea.style.background = 'var(--accent-2)';
+    });
+
+    wallpaperUploadArea.addEventListener('dragleave', () => {
+      wallpaperUploadArea.style.borderColor = '';
+      wallpaperUploadArea.style.background = '';
+    });
+
+    wallpaperUploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      wallpaperUploadArea.style.borderColor = '';
+      wallpaperUploadArea.style.background = '';
+      const file = e.dataTransfer.files[0];
+      if (file) handleWallpaperFile(file);
+    });
+
+    wallpaperRemoveBtn.addEventListener('click', async () => {
+      await deleteWallpaperData();
+      clearWallpaper();
+      hideWallpaperPreview();
+    });
+
+    // Load saved wallpaper on startup
+    async function initWallpaper() {
+      try {
+        const data = await loadWallpaperData();
+        if (data && data.blob) {
+          applyWallpaper(data.blob, data.type);
+          showWallpaperPreview(data.blob, data.type);
+        }
+      } catch (e) {
+        console.warn('Failed to load wallpaper:', e);
+      }
+    }
+    initWallpaper();
 
     renderAll();
   </script>
