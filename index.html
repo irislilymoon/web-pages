@@ -1229,133 +1229,23 @@
 
     // ===== Auto Favicon Adaptation System =====
     const FAVICON_CACHE_KEY = 'newtab.favicon_cache.v1';
-    const FAVICON_FAIL_KEY = 'newtab.favicon_nocache.v1';
-    const FAVICON_WARMUP_KEY = 'newtab.favicon_warmup.v1';
-    const FAVICON_SUCCESS_TTL = 1000 * 60 * 60 * 24 * 14;
-    const FAVICON_FAIL_TTL = 1000 * 60 * 60 * 24 * 3;
-    const FAVICON_WARMUP_INTERVAL = 1000 * 60 * 20;
-    const FAVICON_WARMUP_LIMIT = 6;
-    const FAVICON_WARMUP_GAP = 160;
-
-    const faviconCache = new Map();
-    const faviconFailCache = new Map();
-    const faviconQueue = [];
-    let faviconQueueRunning = false;
-    let warmupBudget = FAVICON_WARMUP_LIMIT;
-
-    const FAVICON_SOURCES = [
-      {
-        id: 'direct',
-        buildUrl: (host) => `https://${host}/favicon.ico`,
-        timeout: 1600,
-        validate: false,
-        requireValidation: false,
-        crossOrigin: 'anonymous'
-      },
-      {
-        id: 'favicon-im',
-        buildUrl: (host) => `https://favicon.im/${host}`,
-        timeout: 2000,
-        validate: true,
-        requireValidation: true,
-        crossOrigin: 'anonymous'
-      },
-      {
-        id: 'favicon-vip',
-        buildUrl: (host) => `https://www.favicon.vip/get.php?url=${host}`,
-        timeout: 2000,
-        validate: true,
-        requireValidation: true,
-        crossOrigin: 'anonymous'
-      }
-    ];
-
-    const FAVICON_GOOGLE_SOURCES = [
-      {
-        id: 'google-s2',
-        buildUrl: (host) => `https://www.google.com/s2/favicons?domain=${host}&sz=64`,
-        timeout: 2000,
-        validate: true,
-        requireValidation: true,
-        crossOrigin: 'anonymous'
-      }
-    ];
-
-    function getAllFaviconSources(allowGoogle) {
-      return allowGoogle ? FAVICON_SOURCES.concat(FAVICON_GOOGLE_SOURCES) : FAVICON_SOURCES;
-    }
+    const FAVICON_NOCACHE_KEY = 'newtab.favicon_nocache.v1';
+    const faviconUrlCache = new Map();    // hostname → successful favicon URL
+    const faviconNoCache = new Set();     // hostnames confirmed to have NO favicon
 
     function loadFaviconCache() {
-      faviconCache.clear();
-      faviconFailCache.clear();
       try {
         const data = JSON.parse(localStorage.getItem(FAVICON_CACHE_KEY) || '{}');
-        if (data && typeof data === 'object') {
-          Object.entries(data).forEach(([host, value]) => {
-            if (typeof value === 'string') {
-              faviconCache.set(host, { url: value, updatedAt: Date.now(), source: 'legacy' });
-            } else if (value && typeof value === 'object' && typeof value.url === 'string') {
-              faviconCache.set(host, {
-                url: value.url,
-                updatedAt: value.updatedAt || Date.now(),
-                source: value.source || ''
-              });
-            }
-          });
-        }
-      } catch {}
-
-      try {
-        const data = JSON.parse(localStorage.getItem(FAVICON_FAIL_KEY) || '[]');
-        if (Array.isArray(data)) {
-          data.forEach(host => {
-            faviconFailCache.set(host, {
-              updatedAt: Date.now(),
-              retryAt: Date.now() + FAVICON_FAIL_TTL,
-              reason: 'legacy'
-            });
-          });
-        } else if (data && typeof data === 'object') {
-          Object.entries(data).forEach(([host, value]) => {
-            if (value === true) {
-              faviconFailCache.set(host, {
-                updatedAt: Date.now(),
-                retryAt: Date.now() + FAVICON_FAIL_TTL,
-                reason: 'legacy'
-              });
-              return;
-            }
-            if (value && typeof value === 'object') {
-              const updatedAt = value.updatedAt || Date.now();
-              const retryAt = value.retryAt || (updatedAt + FAVICON_FAIL_TTL);
-              faviconFailCache.set(host, {
-                updatedAt,
-                retryAt,
-                reason: value.reason || 'fail'
-              });
-            }
-          });
-        }
+        Object.entries(data).forEach(([host, url]) => faviconUrlCache.set(host, url));
+        const noData = JSON.parse(localStorage.getItem(FAVICON_NOCACHE_KEY) || '[]');
+        noData.forEach(host => faviconNoCache.add(host));
       } catch {}
     }
 
     function saveFaviconCache() {
       try {
-        const data = {};
-        faviconCache.forEach((value, host) => {
-          data[host] = value;
-        });
-        localStorage.setItem(FAVICON_CACHE_KEY, JSON.stringify(data));
-      } catch {}
-    }
-
-    function saveFaviconFailCache() {
-      try {
-        const data = {};
-        faviconFailCache.forEach((value, host) => {
-          data[host] = value;
-        });
-        localStorage.setItem(FAVICON_FAIL_KEY, JSON.stringify(data));
+        localStorage.setItem(FAVICON_CACHE_KEY, JSON.stringify(Object.fromEntries(faviconUrlCache)));
+        localStorage.setItem(FAVICON_NOCACHE_KEY, JSON.stringify([...faviconNoCache]));
       } catch {}
     }
 
@@ -1363,47 +1253,25 @@
       try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; }
     }
 
-    function isLetterIcon(icon) {
-      return !icon || icon.startsWith('data:image/svg+xml');
+    function getFaviconSources(hostname) {
+      // Direct favicon.ico is the most reliable signal:
+      // - Loads = site has a real favicon
+      // - 404s = site has no favicon → keep letter SVG
+      // Google API as fallback for sites that serve favicons at
+      // non-standard paths, but we validate results to filter out
+      // Google's generic grey globe placeholder.
+      return [
+        { name: 'direct', url: `https://${hostname}/favicon.ico`,   validate: false, timeout: 1500 },
+        { name: 'google', url: `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`, validate: true,  timeout: 2000 }
+      ];
     }
 
-    function getCachedFaviconUrl(hostname) {
-      const entry = faviconCache.get(hostname);
-      return entry && entry.url ? entry.url : '';
-    }
-
-    function isCacheFresh(entry) {
-      if (!entry || !entry.updatedAt) return false;
-      return Date.now() - entry.updatedAt < FAVICON_SUCCESS_TTL;
-    }
-
-    function canRetryFavicon(hostname) {
-      const entry = faviconFailCache.get(hostname);
-      if (!entry || !entry.retryAt) return true;
-      return Date.now() >= entry.retryAt;
-    }
-
-    function setFaviconCache(hostname, url, source) {
-      faviconCache.set(hostname, { url, updatedAt: Date.now(), source });
-      faviconFailCache.delete(hostname);
-      saveFaviconCache();
-      saveFaviconFailCache();
-    }
-
-    function markFaviconFailed(hostname, reason) {
-      faviconFailCache.set(hostname, {
-        updatedAt: Date.now(),
-        retryAt: Date.now() + FAVICON_FAIL_TTL,
-        reason
-      });
-      saveFaviconFailCache();
-    }
-
-    function analyzeImageVariance(img) {
+    // Detect Google's grey globe placeholder by checking colour variance.
+    // Real favicons have high variance; the globe is nearly monochrome grey.
+    function isPlaceholderFavicon(img) {
       try {
-        const w = Math.min(img.naturalWidth || 0, 18);
-        const h = Math.min(img.naturalHeight || 0, 18);
-        if (!w || !h) return null;
+        const w = Math.min(img.naturalWidth, 16);
+        const h = Math.min(img.naturalHeight, 16);
         const canvas = document.createElement('canvas');
         canvas.width = w;
         canvas.height = h;
@@ -1412,50 +1280,25 @@
         const data = ctx.getImageData(0, 0, w, h).data;
         const count = w * h;
         let sumR = 0, sumG = 0, sumB = 0;
-        let minR = 255, minG = 255, minB = 255;
-        let maxR = 0, maxG = 0, maxB = 0;
         for (let i = 0; i < data.length; i += 4) {
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
-          sumR += r;
-          sumG += g;
-          sumB += b;
-          if (r < minR) minR = r;
-          if (g < minG) minG = g;
-          if (b < minB) minB = b;
-          if (r > maxR) maxR = r;
-          if (g > maxG) maxG = g;
-          if (b > maxB) maxB = b;
+          sumR += data[i];
+          sumG += data[i + 1];
+          sumB += data[i + 2];
         }
-        const avgR = sumR / count;
-        const avgG = sumG / count;
-        const avgB = sumB / count;
+        const avgR = sumR / count, avgG = sumG / count, avgB = sumB / count;
         let variance = 0;
         for (let i = 0; i < data.length; i += 4) {
-          const dr = data[i] - avgR;
-          const dg = data[i + 1] - avgG;
-          const db = data[i + 2] - avgB;
+          const dr = data[i] - avgR, dg = data[i + 1] - avgG, db = data[i + 2] - avgB;
           variance += dr * dr + dg * dg + db * db;
         }
         variance /= count;
-        const range = (maxR - minR) + (maxG - minG) + (maxB - minB);
-        const avg = (avgR + avgG + avgB) / 3;
-        return { variance, range, avg };
+        return variance < 800;
       } catch {
-        return null;
+        return false;
       }
     }
 
-    function isPlaceholderFavicon(img) {
-      const stats = analyzeImageVariance(img);
-      if (!stats) return null;
-      if (stats.variance < 650) return true;
-      if (stats.range < 22 && stats.avg > 140) return true;
-      return false;
-    }
-
-    function tryLoadImage(src, source) {
+    function tryLoadImage(src, timeoutMs, needValidation) {
       return new Promise((resolve) => {
         const img = new Image();
         let settled = false;
@@ -1464,49 +1307,45 @@
           settled = true;
           clearTimeout(timer);
           if (!success) { img.src = ''; resolve(null); return; }
-          if (source.validate) {
-            const placeholder = isPlaceholderFavicon(img);
-            if (placeholder === true || (placeholder === null && source.requireValidation)) {
-              img.src = '';
-              resolve(null);
-              return;
-            }
+          if (needValidation && isPlaceholderFavicon(img)) {
+            img.src = '';
+            resolve(null);
+            return;
           }
           img.src = '';
           resolve(src);
         };
-        const timer = setTimeout(() => done(false), source.timeout);
+        const timer = setTimeout(() => done(false), timeoutMs);
         img.onload = () => done(true);
         img.onerror = () => done(false);
-        if (source.crossOrigin) img.crossOrigin = source.crossOrigin;
         img.src = src;
       });
     }
 
-    async function resolveFavicon(hostname, options = {}) {
+    async function resolveFavicon(hostname) {
       if (!hostname) return null;
-      const allowGoogle = options.allowGoogle === true;
-      const force = options.force === true;
-      const cached = faviconCache.get(hostname);
-      if (cached && isCacheFresh(cached) && !force) return cached.url;
-      if (!force && !canRetryFavicon(hostname)) return cached ? cached.url : null;
+      // Already cached a successful favicon URL
+      if (faviconUrlCache.has(hostname)) return faviconUrlCache.get(hostname);
+      // Already confirmed this host has no favicon — don't waste time re-checking
+      if (faviconNoCache.has(hostname)) return null;
 
-      const sources = getAllFaviconSources(allowGoogle);
+      const sources = getFaviconSources(hostname);
       for (const source of sources) {
-        const url = source.buildUrl(hostname);
-        const result = await tryLoadImage(url, source);
+        const result = await tryLoadImage(source.url, source.timeout, source.validate);
         if (result) {
-          setFaviconCache(hostname, result, source.id);
-          return result;
+          faviconUrlCache.set(hostname, source.url);
+          faviconNoCache.delete(hostname);
+          saveFaviconCache();
+          return source.url;
         }
       }
-
-      markFaviconFailed(hostname, allowGoogle ? 'all' : 'primary');
-      return cached ? cached.url : null;
+      // All sources exhausted — remember to never check this host again
+      faviconNoCache.add(hostname);
+      saveFaviconCache();
+      return null;
     }
 
     function updateShortcutIconDOM(hostname, faviconUrl) {
-      if (!faviconUrl) return;
       const imgs = shortcutsGrid.querySelectorAll(`.shortcut-icon img[data-host="${hostname}"]`);
       imgs.forEach(img => {
         img.classList.add('favicon-loading');
@@ -1523,99 +1362,29 @@
       });
     }
 
-    function applyFaviconToShortcuts(hostname, faviconUrl) {
-      if (!faviconUrl) return;
-      let changed = false;
-      state.shortcuts.forEach((shortcut) => {
-        if (getHostname(shortcut.url) === hostname && shortcut.icon !== faviconUrl) {
-          shortcut.icon = faviconUrl;
-          changed = true;
-        }
-      });
-      if (changed) saveShortcuts();
-      updateShortcutIconDOM(hostname, faviconUrl);
-    }
-
-    function enqueueFavicon(hostname, options = {}) {
-      if (!hostname) return;
-      const allowGoogle = options.allowGoogle === true;
-      const force = options.force === true;
-      const kind = options.kind || 'warmup';
-      const existing = faviconQueue.find(item => item.hostname === hostname);
-      if (existing) {
-        existing.allowGoogle = existing.allowGoogle || allowGoogle;
-        existing.force = existing.force || force;
-        existing.kind = existing.kind === 'direct' ? 'direct' : kind;
-        return;
-      }
-      faviconQueue.push({ hostname, allowGoogle, force, kind });
-      runFaviconQueue();
-    }
-
-    async function runFaviconQueue() {
-      if (faviconQueueRunning) return;
-      faviconQueueRunning = true;
-      while (faviconQueue.length) {
-        const task = faviconQueue.shift();
-        if (!task) break;
-        if (task.kind === 'warmup') {
-          if (warmupBudget <= 0) continue;
-          warmupBudget -= 1;
-        }
-        const result = await resolveFavicon(task.hostname, {
-          allowGoogle: task.allowGoogle,
-          force: task.force
-        });
-        if (result) applyFaviconToShortcuts(task.hostname, result);
-        await new Promise(r => setTimeout(r, FAVICON_WARMUP_GAP));
-      }
-      faviconQueueRunning = false;
-    }
-
-    function shouldWarmup() {
-      const last = Number(localStorage.getItem(FAVICON_WARMUP_KEY) || 0);
-      if (Date.now() - last < FAVICON_WARMUP_INTERVAL) return false;
-      localStorage.setItem(FAVICON_WARMUP_KEY, String(Date.now()));
-      return true;
-    }
-
-    function collectWarmupHosts() {
+    // Preload favicons ONE AT A TIME with a gap, so the browser never
+    // gets flooded with parallel requests.  Known-no-favicon hosts are
+    // skipped entirely (negative cache).
+    async function preloadShortcutIcons() {
       const seen = new Set();
-      const hosts = [];
-      state.shortcuts.forEach((shortcut) => {
+      for (let i = 0; i < state.shortcuts.length; i++) {
+        const shortcut = state.shortcuts[i];
         const host = getHostname(shortcut.url);
-        if (!host || seen.has(host)) return;
+        if (!host || seen.has(host)) continue;
         seen.add(host);
-        const cached = faviconCache.get(host);
-        const needsRefresh = !cached || !isCacheFresh(cached);
-        if (!needsRefresh) return;
-        if (!canRetryFavicon(host)) return;
-        if (!isLetterIcon(shortcut.icon) && cached) {
-          hosts.push(host);
-          return;
-        }
-        if (isLetterIcon(shortcut.icon)) {
-          hosts.push(host);
-        }
-      });
-      return hosts;
-    }
+        // Skip if already has a real favicon or is known to have none
+        if (!shortcut.icon || !shortcut.icon.startsWith('data:')) continue;
+        if (faviconNoCache.has(host)) continue;
 
-    function startFaviconWarmup() {
-      if (!shouldWarmup()) return;
-      warmupBudget = FAVICON_WARMUP_LIMIT;
-      const hosts = collectWarmupHosts();
-      if (!hosts.length) return;
-      const kickoff = () => {
-        hosts.slice(0, FAVICON_WARMUP_LIMIT).forEach((host) => {
-          enqueueFavicon(host, { kind: 'warmup', allowGoogle: false });
-        });
-      };
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(kickoff, { timeout: 2000 });
-      } else {
-        setTimeout(kickoff, 300);
+        const faviconUrl = await resolveFavicon(host);
+        if (faviconUrl) {
+          shortcut.icon = faviconUrl;
+          updateShortcutIconDOM(host, faviconUrl);
+        }
+        // Small gap so the browser can breathe between requests
+        await new Promise(r => setTimeout(r, 150));
       }
+      saveShortcuts();
     }
 
     async function refreshFavicon(index) {
@@ -1623,27 +1392,32 @@
       if (!shortcut) return;
       const host = getHostname(shortcut.url);
       if (!host) return;
-      faviconCache.delete(host);
-      faviconFailCache.delete(host);
+      // Clear both positive and negative cache for this host
+      faviconUrlCache.delete(host);
+      faviconNoCache.delete(host);
       saveFaviconCache();
-      saveFaviconFailCache();
-
+      // Reset to letter icon immediately
       shortcut.icon = makeFavicon(shortcut.url, shortcut.name);
       const img = shortcutsGrid.querySelector(`.shortcut-slot[data-shortcut-index="${index}"] .shortcut-icon img`);
       if (img) {
         img.src = shortcut.icon;
         img.classList.remove('favicon-loaded', 'favicon-loading');
       }
+      // Re-resolve
+      const faviconUrl = await resolveFavicon(host);
+      if (faviconUrl) {
+        shortcut.icon = faviconUrl;
+        updateShortcutIconDOM(host, faviconUrl);
+      }
       saveShortcuts();
-
-      enqueueFavicon(host, { allowGoogle: true, force: true, kind: 'direct' });
     }
 
     function renderShortcuts() {
       let synced = false;
       shortcutsGrid.innerHTML = state.shortcuts.map((shortcut, index) => {
         const host = getHostname(shortcut.url);
-        const cachedUrl = getCachedFaviconUrl(host);
+        const cachedUrl = faviconUrlCache.get(host);
+        // Sync shortcut.icon with cache
         if (cachedUrl && shortcut.icon !== cachedUrl) {
           shortcut.icon = cachedUrl;
           synced = true;
@@ -1724,12 +1498,10 @@
       const normalizedUrl = normalizeUrl(url);
       if (!normalizedUrl) return;
 
-      const hostname = getHostname(normalizedUrl);
-      const cachedIcon = hostname ? getCachedFaviconUrl(hostname) : '';
       const shortcut = {
         name: name.trim() || safeHostname(normalizedUrl),
         url: normalizedUrl,
-        icon: cachedIcon || makeFavicon(normalizedUrl, name || safeHostname(normalizedUrl))
+        icon: makeFavicon(normalizedUrl, name || safeHostname(normalizedUrl))
       };
 
       if (state.editingIndex === null) {
@@ -1748,9 +1520,16 @@
       saveShortcuts();
       renderShortcuts();
       closeShortcutModal();
-      // Resolve favicon only for this shortcut, not all
-      if (hostname && isLetterIcon(shortcut.icon)) {
-        enqueueFavicon(hostname, { allowGoogle: true, kind: 'direct' });
+      // Preload favicon for the new shortcut
+      const host = getHostname(shortcut.url);
+      if (host && shortcut.icon && shortcut.icon.startsWith('data:')) {
+        resolveFavicon(host).then(faviconUrl => {
+          if (faviconUrl) {
+            shortcut.icon = faviconUrl;
+            updateShortcutIconDOM(host, faviconUrl);
+            saveShortcuts();
+          }
+        });
       }
     }
 
@@ -2343,8 +2122,8 @@
     // Load favicon cache then render
     loadFaviconCache();
     renderAll();
-    // Warmup favicon queue with strict throttling to avoid startup jank
-    startFaviconWarmup();
+    // Background preload real favicons (non-blocking)
+    requestIdleCallback ? requestIdleCallback(() => preloadShortcutIcons()) : setTimeout(() => preloadShortcutIcons(), 300);
   </script>
 </body>
 </html>
