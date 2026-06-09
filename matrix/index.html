@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MATRIX // 数据流</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #000;
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+      cursor: crosshair;
+    }
+    canvas { display: block; }
+
+    /* HUD overlay */
+    .hud {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      color: #0f0;
+      font-size: 13px;
+      line-height: 1.8;
+      opacity: 0.6;
+      text-shadow: 0 0 8px #0f0;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .hud .label { color: #0a0; }
+    .hud .val { color: #0f0; font-weight: bold; }
+
+    /* 右上角 HUD */
+    .hud-right {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      color: #0f0;
+      font-size: 12px;
+      line-height: 1.8;
+      opacity: 0.5;
+      text-shadow: 0 0 6px #0f0;
+      text-align: right;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* 底部扫描线 */
+    .scanline {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #0f04, #0f0a, #0f04, transparent);
+      z-index: 20;
+      animation: scanDown 4s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes scanDown {
+      0% { top: -2px; }
+      100% { top: 100vh; }
+    }
+
+    /* CRT 扫描线效果 */
+    .crt {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.15) 0px,
+        rgba(0,0,0,0.15) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: 30;
+    }
+
+    /* 水平闪烁条 */
+    .glitch-bar {
+      position: fixed;
+      left: 0; right: 0;
+      height: 2px;
+      background: rgba(0, 255, 0, 0.12);
+      z-index: 15;
+      animation: glitchBar 6s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes glitchBar {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
+    }
+
+    /* 中央文字 */
+    .center-text {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: #0f0;
+      font-size: 48px;
+      letter-spacing: 12px;
+      text-shadow: 0 0 20px #0f0, 0 0 40px #0a0, 0 0 80px #050;
+      opacity: 0;
+      z-index: 25;
+      pointer-events: none;
+      animation: fadeInOut 6s ease-in-out infinite;
+      font-weight: bold;
+    }
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0; }
+      40%, 60% { opacity: 0.85; }
+    }
+
+    /* 数据流信息 */
+    .data-info {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      color: #0f0;
+      font-size: 11px;
+      opacity: 0.4;
+      text-shadow: 0 0 4px #0f0;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* 边框装饰 */
+    .corner {
+      position: fixed;
+      width: 40px; height: 40px;
+      border: 1px solid rgba(0, 255, 0, 0.3);
+      z-index: 25;
+      pointer-events: none;
+    }
+    .corner.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+    .corner.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+    .corner.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+    .corner.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <div class="crt"></div>
+  <div class="scanline"></div>
+  <div class="glitch-bar" id="glitchBar"></div>
+
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <div class="center-text" id="centerText">MATRIX</div>
+
+  <div class="hud">
+    <div><span class="label">SYS://</span> <span class="val" id="hudStatus">INITIALIZING</span></div>
+    <div><span class="label">NODE:</span> <span class="val" id="hudNode">--</span></div>
+    <div><span class="label">FLOW:</span> <span class="val" id="hudFlow">0</span> ch/s</div>
+    <div><span class="label">LAT:</span> <span class="val" id="hudLat">--</span></div>
+  </div>
+
+  <div class="hud-right">
+    <div>[ ENCRYPT ] AES-256-GCM</div>
+    <div>[ PACKET ] <span id="pktCount">0</span></div>
+    <div>[ UPTIME ] <span id="uptime">00:00:00</span></div>
+  </div>
+
+  <div class="data-info" id="dataInfo"></div>
+
+  <script>
+    // ============ Matrix Rain ============
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let W, H, cols, drops;
+    const fontSize = 16;
+    // 日文片假名 + 数字 + 汉字
+    const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF';
+    const charArr = chars.split('');
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      cols = Math.ceil(W / fontSize);
+      drops = new Array(cols).fill(0).map(() => Math.random() * -100 | 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // 每列颜色亮度略有不同
+    const colBrightness = new Array(cols).fill(0).map(() => 0.4 + Math.random() * 0.6);
+
+    // 鼠标追踪
+    let mouseX = -1, mouseY = -1;
+    document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+
+    // 二进制随机字节显示
+    function randomByte() {
+      return Math.random() < 0.12
+        ? Math.random() < 0.5 ? '0' : '1'
+        : charArr[Math.random() * charArr.length | 0];
+    }
+
+    let lastTime = 0;
+    const fps = 18;
+    const interval = 1000 / fps;
+    let frameCount = 0;
+
+    function draw(time) {
+      requestAnimationFrame(draw);
+      if (time - lastTime < interval) return;
+      lastTime = time;
+      frameCount++;
+
+      // 拖尾半透明黑色
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
+      ctx.fillRect(0, 0, W, H);
+
+      for (let i = 0; i < cols; i++) {
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+        const b = colBrightness[i];
+
+        // 头部字符高亮
+        const char = randomByte();
+        const dx = Math.abs(mouseX - x);
+        const dy = Math.abs(mouseY - y);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const mouseNear = dist < 120;
+
+        // 头部
+        if (mouseNear) {
+          ctx.fillStyle = `rgba(200, 255, 200, ${0.95 * b})`;
+          ctx.shadowColor = '#0f0';
+          ctx.shadowBlur = 15;
+        } else {
+          ctx.fillStyle = `rgba(180, 255, 180, ${0.9 * b})`;
+          ctx.shadowColor = '#0f0';
+          ctx.shadowBlur = 8;
+        }
+        ctx.fillText(char, x, y);
+
+        // 尾巴渐隐
+        const tailLen = 12 + Math.floor(Math.random() * 6);
+        for (let t = 1; t <= tailLen; t++) {
+          const ty = y - t * fontSize;
+          if (ty < 0) break;
+          const alpha = (1 - t / tailLen) * 0.7 * b;
+          ctx.fillStyle = `rgba(0, 255, 65, ${alpha})`;
+          ctx.shadowBlur = 0;
+          ctx.fillText(randomByte(), x, ty);
+        }
+
+        ctx.shadowBlur = 0;
+
+        // 下落速度
+        drops[i] += 0.5 + Math.random() * 1.2;
+
+        // 出屏重置
+        if (drops[i] * fontSize > H && Math.random() > 0.975) {
+          drops[i] = Math.random() * -20 | 0;
+          colBrightness[i] = 0.4 + Math.random() * 0.6;
+        }
+      }
+
+      // 每隔一段时间更新 HUD
+      if (frameCount % 10 === 0) updateHUD();
+    }
+
+    requestAnimationFrame(draw);
+
+    // ============ HUD 动态数据 ============
+    const startTime = Date.now();
+    const nodes = ['US-EAST-1', 'CN-NORTH-2', 'EU-WEST-3', 'AP-SOUTH-1', 'JP-EAST-1', 'KR-WEST-1'];
+    let packetCount = 0;
+
+    function updateHUD() {
+      document.getElementById('hudStatus').textContent = 'ACTIVE';
+      document.getElementById('hudNode').textContent = nodes[Math.random() * nodes.length | 0];
+      document.getElementById('hudFlow').textContent = (1200 + Math.random() * 3800 | 0).toLocaleString();
+      document.getElementById('hudLat').textContent = (2 + Math.random() * 45 | 0) + 'ms';
+
+      packetCount += Math.random() * 50 | 0;
+      document.getElementById('pktCount').textContent = packetCount.toLocaleString();
+
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const hh = String(elapsed / 3600 | 0).padStart(2, '0');
+      const mm = String(elapsed % 3600 / 60 | 0).padStart(2, '0');
+      const ss = String(elapsed % 60).padStart(2, '0');
+      document.getElementById('uptime').textContent = `${hh}:${mm}:${ss}`;
+    }
+
+    // Glitch bar 随机位置
+    setInterval(() => {
+      const bar = document.getElementById('glitchBar');
+      bar.style.top = (Math.random() * 100) + 'vh';
+      bar.style.height = (1 + Math.random() * 3) + 'px';
+    }, 3000);
+
+    // 鼠标处产生高亮字符爆裂
+    canvas.addEventListener('click', e => {
+      const burstChars = charArr.sort(() => Math.random() - 0.5).slice(0, 8);
+      burstChars.forEach((c, i) => {
+        const span = document.createElement('span');
+        span.textContent = c;
+        span.style.cssText = `
+          position: fixed;
+          left: ${e.clientX}px;
+          top: ${e.clientY}px;
+          color: #0f0;
+          font-family: 'Courier New', monospace;
+          font-size: 16px;
+          text-shadow: 0 0 10px #0f0;
+          pointer-events: none;
+          z-index: 100;
+          transition: all 0.8s ease-out;
+          opacity: 1;
+        `;
+        document.body.appendChild(span);
+        requestAnimationFrame(() => {
+          const angle = (i / burstChars.length) * Math.PI * 2;
+          const dist = 40 + Math.random() * 60;
+          span.style.transform = `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist}px) scale(1.5)`;
+          span.style.opacity = '0';
+        });
+        setTimeout(() => span.remove(), 900);
+      });
+    });
+
+    // 伪终端日志
+    const logs = [
+      '> establishing encrypted tunnel...',
+      '> packet sniffer initialized',
+      '> decoding nebuchadnezzar v3.2.1',
+      '> tracing signal origin...',
+      '> [MEM] 12.4 GB / 32 GB allocated',
+      '> running neural interface handshake...',
+      '> anomaly detected in sector 7G',
+      '> matrix boundary: nominal',
+      '> residual self-image: calibrated',
+      '> the Matrix has you...',
+      '> follow the white rabbit.',
+      '> connection established: 010.010.110.001',
+      '> decrypting transmission...',
+      '> Zion mainframe: online',
+      '> sentinel proximity: 0.003 AU',
+    ];
+    let logIndex = 0;
+
+    setInterval(() => {
+      const el = document.getElementById('dataInfo');
+      el.textContent = logs[logIndex % logs.length];
+      logIndex++;
+    }, 2500);
+  </script>
+</body>
+</html>
