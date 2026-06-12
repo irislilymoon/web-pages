@@ -1451,8 +1451,16 @@
       addOrUpdateShortcut(shortcutNameInput.value, shortcutUrlInput.value);
     });
 
+    shortcutModalBackdrop.addEventListener('mousedown', (event) => {
+      shortcutModalBackdrop._mousedownOnBackdrop = (event.target === shortcutModalBackdrop);
+    });
+
     shortcutModalBackdrop.addEventListener('click', (event) => {
-      if (event.target === shortcutModalBackdrop) closeShortcutModal();
+      // Only close when the full click (mousedown + mouseup) happened on backdrop,
+      // not when user was dragging text selection from inside the modal
+      if (event.target === shortcutModalBackdrop && shortcutModalBackdrop._mousedownOnBackdrop) {
+        closeShortcutModal();
+      }
     });
 
     closeShortcutModalBtn.addEventListener('click', closeShortcutModal);
