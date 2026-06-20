@@ -1,8 +1,11 @@
 <!doctype html>
-<html lang="zh-CN" data-immersive-reader="disable">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="application-name" content="MyNewTab">
+  <meta name="description" content="">
+  <meta name="IE_RM_OFF" content="true">
   <title>MyNewTab</title>
   <link rel="icon" href="https://assets.msn.cn/statics/icons/favicon_newtabpage.png" />
   <link rel="shortcut icon" href="https://assets.msn.cn/statics/icons/favicon_newtabpage.png" />
@@ -60,6 +63,7 @@
     html, body {
       height: 100%;
       margin: 0;
+      user-select: none;
       font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
       color: var(--text);
       background:
@@ -857,7 +861,7 @@
     }
   </style>
 </head>
-<body>
+<body role="application">
   <div class="wallpaper-layer" id="wallpaperLayer"></div>
   <div class="app" id="app">
     <div class="action-column">
@@ -925,8 +929,8 @@
       </div>
     </aside>
 
-    <main class="hero">
-      <section class="search-shell" aria-label="搜索栏">
+    <div class="hero">
+      <div class="search-shell" role="search">
         <div class="engine-selector">
           <img class="engine-simple-icon" id="engineChipIcon" title="切换搜索引擎" alt="" />
           <div class="engine-dropdown" id="engineDropdown"></div>
@@ -940,11 +944,11 @@
             </svg>
           </button>
         </form>
-      </section>
+      </div>
 
-      <section class="shortcuts-grid" id="shortcutsGrid" aria-label="快捷方式列表">
-      </section>
-    </main>
+      <div class="shortcuts-grid" id="shortcutsGrid" role="list">
+      </div>
+    </div>
   </div>
 
   <div class="modal-backdrop" id="shortcutModalBackdrop" aria-hidden="true">
