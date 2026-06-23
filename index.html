@@ -1330,7 +1330,7 @@
       if (!keyword) return;
       const engine = getCurrentEngine();
       const url = `${engine.url}${encodeURIComponent(keyword)}`;
-      window.open(url, '_blank');
+      window.location.href = url;
     }
 
     topAddButton.addEventListener('click', () => {
@@ -1446,7 +1446,7 @@
       }
 
       if (openWrapper) {
-        window.open(openWrapper.dataset.openUrl, '_blank');
+        window.location.href = openWrapper.dataset.openUrl;
       }
     });
 
